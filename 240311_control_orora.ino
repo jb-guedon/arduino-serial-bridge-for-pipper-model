@@ -5,6 +5,7 @@ code to pilot the EM-337A-PLI controler for accurator
 - connect the arduino by usb serial at 9600 baud
 - send '1' to serial to bring up the accurator
 - send '2' to lower the accurator 
+- send 'r' to reset the accurator
 
 !!! wait for the accurator have reached their position befor 
 send a new order otherwise it will not take the new order !!!
@@ -18,7 +19,7 @@ int up = 10;                                //pin for up
 int down = 11;                              //pin for down
 int up_time_val = 29000;                    //lift up time
 int down_time_val = up_time_val + 1000;     //lift down time (=lift up time + 1 seccond)
-bool state = false;                         //security flag     false = down    true = up
+bool state = false;                         //security flag     false = down    true = up                           
 
 void setup() {
   Serial.begin(9600);
@@ -39,6 +40,8 @@ void loop() {
       GO_DOWN();
       delay(down_time_val);
       STOP();
+    } else if (val == 'r'){
+      reset();
     }
     Serial.flush();
   }
@@ -62,4 +65,11 @@ void STOP() {
   digitalWrite(down, HIGH);             //release the down button
   digitalWrite(up, HIGH);               //release the up button
   digitalWrite(LED_BUILTIN, LOW);       //turn off the visual signal
+}
+
+void reset(){                           //simulate the push of the two button durring at least 10 secondes make a reset
+  digitalWrite(up, LOW);  
+  digitalWrite(down, LOW);  
+  delay(12000)
+  state = false; 
 }
