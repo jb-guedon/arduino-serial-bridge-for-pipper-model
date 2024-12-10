@@ -19,14 +19,14 @@ pin low = relay on
 --------------------------V2
 code to pilot the EM-337A-PLI controler for accurator
 
-h --> help
-i --> info
-1 --> up model
-2 --> down model
-r --> reset accurator (steel in test, do not use in production!!!
-U+value --> set a new 'up time' in millisecond (ex: U30000 = up time 30s)
+- h --> help
+- i --> info
+- 1 --> up model
+- 2 --> down model
+- r --> reset accurator (steel in test, do not use in production!!!
+- U+value --> set a new 'up time' in millisecond (ex: U30000 = up time 30s)
 when update the up time the new down time is auto compute (down time = up time + 2s)
-D+value --> set a new 'down time' in millisecond (ex: U30000 =  time 30s)
+- D+value --> set a new 'down time' in millisecond (ex: U30000 =  time 30s)
 the down time MUST be higher than the up time!(to be shure that the model goes down properly)
 
 !!! wait for the accurator have reached their position befor 
