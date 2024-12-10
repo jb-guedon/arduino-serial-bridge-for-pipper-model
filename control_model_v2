@@ -1,0 +1,176 @@
+#include <EEPROM.h>
+
+//#define esp32
+
+
+#ifdef esp32
+const int up = 22;    // Pin up
+const int down = 23;  // Pin down
+#else
+const int up = 9;     //pin up
+const int down = 10;  //pin down
+#endif
+
+int up_time_val;
+int down_time_val;
+int spare_time_val;
+bool state = false;
+bool secu = true;
+
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(up, OUTPUT);
+  pinMode(down, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+
+#ifdef esp32
+  EEPROM.begin(512);
+#endif
+
+  up_time_val = EEPROM.read(0) * 100;
+  spare_time_val = EEPROM.read(1) * 100;
+  if (up_time_val == 0) up_time_val = 29000;
+  if (spare_time_val == 0) spare_time_val = 2000;
+  down_time_val = up_time_val + spare_time_val;
+  Serial.println();
+  Serial.println("---------------------");
+  Serial.println("Systeme ready");
+  Serial.println();
+  command_help();
+  feedback();
+  STOP();
+}
+
+void loop() {
+  if (Serial.available()) {
+    String command = Serial.readStringUntil('\n');
+
+    if (command.startsWith("U")) {
+      int new_up_time = command.substring(1).toInt();
+      if (new_up_time > 0) {
+        up_time_val = new_up_time;
+        EEPROM.write(0, up_time_val / 100);
+#ifdef esp32
+        EEPROM.commit();
+#endif
+        down_time_val = up_time_val + spare_time_val;
+        Serial.print("new up time = ");
+        Serial.println(up_time_val);
+      } else {
+        Serial.println("command not found");
+      }
+    } else if (command.startsWith("D")) {
+      int new_down_time = command.substring(1).toInt();
+      if (new_down_time > up_time_val) {
+        spare_time_val = new_down_time - up_time_val;
+        EEPROM.write(1, spare_time_val / 100);
+#ifdef esp32
+        EEPROM.commit();
+#endif
+        down_time_val = new_down_time;
+        Serial.print("new down time = ");
+        Serial.println(down_time_val);
+      } else {
+        Serial.println("D MUST be higher than U");
+      }
+    } else if (command == "1") {
+      if (secu) {
+        if (!state) {
+          GO_UP();
+        } else {
+          Serial.println("already up !");
+          Serial.println();
+        }
+      } else {
+        GO_UP();
+      }
+    } else if (command == "2") {
+      if (secu) {
+        if (state) {
+          GO_DOWN();
+        } else {
+          Serial.println("already down !");
+          Serial.println();
+        }
+      }else{
+        GO_DOWN();
+      }
+    } else if (command == "r") {
+      reset();
+    } else if (command == "i") {
+      feedback();
+    } else if (command == "h") {
+      command_help();
+    } else if (command == "s") {
+      secu = !secu;
+      Serial.print("secu = ");
+      Serial.println(secu);
+      Serial.println();
+    } else {
+      Serial.println("unknow command !");
+      Serial.println();
+    }
+  }
+}
+
+void GO_UP() {
+  digitalWrite(down, HIGH);
+  digitalWrite(up, LOW);
+  digitalWrite(LED_BUILTIN, HIGH);
+  state = true;
+  Serial.println(">>> up");
+  delay(up_time_val);
+  STOP();
+}
+
+void GO_DOWN() {
+  digitalWrite(up, HIGH);
+  digitalWrite(down, LOW);
+  digitalWrite(LED_BUILTIN, HIGH);
+  state = false;
+  Serial.println(">>> down");
+  delay(down_time_val);
+  STOP();
+}
+
+void STOP() {
+  digitalWrite(down, HIGH);
+  digitalWrite(up, HIGH);
+  digitalWrite(LED_BUILTIN, LOW);
+  Serial.println(">>> stop");
+  Serial.println();
+}
+
+void reset() {
+  digitalWrite(up, LOW);
+  digitalWrite(down, LOW);
+  Serial.println(">>> reset...");
+  delay(12000);
+  Serial.println("reset done !");
+  Serial.println();
+  state = false;
+}
+
+void command_help() {
+  Serial.println("*********** help ***********");
+  Serial.println("h --> help");
+  Serial.println("i --> info");
+  Serial.println("1 --> up model");
+  Serial.println("2 --> down model");
+  Serial.println("r --> reset accurator (steel in test, do not use in production!!!)");
+  Serial.println("U+value --> set a new 'up time' in millisecond (ex: U30000 = up time 30s)");
+  Serial.println("when update the up time the new down time is auto compute (down time = up time + 2s)");
+  Serial.println("D+value --> set a new 'down time' in millisecond (ex: U30000 =  time 30s)");
+  Serial.println("the down time MUST be higher than the up time!(to be shure that the model goes down properly)");
+  Serial.println();
+}
+
+void feedback() {
+  Serial.println("*********** feedback ***********");
+  Serial.print("up time = ");
+  Serial.println(up_time_val);
+  Serial.print("down time = ");
+  Serial.println(down_time_val);
+  Serial.println();
+}
