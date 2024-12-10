@@ -32,8 +32,8 @@ the down time MUST be higher than the up time!(to be shure that the model goes d
 !!! wait for the accurator have reached their position befor 
 send a new order otherwise it will not take the new order !!!
 
-pin high = relay off
-pin low = relay on
+-pin high = relay off
+-pin low = relay on
 
-pin 9 = up
-pin 10 = down
+-pin 9 = up
+-pin 10 = down
